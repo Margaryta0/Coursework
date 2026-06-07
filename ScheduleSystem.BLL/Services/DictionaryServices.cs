@@ -1,9 +1,12 @@
 using AutoMapper;
+using ScheduleSystem.BLL.Exceptions;
 using ScheduleSystem.BLL.Interfaces;
 using ScheduleSystem.BLL.Models;
+using ScheduleSystem.DAL.Entities;
 using ScheduleSystem.DAL.Interfaces;
 
 namespace ScheduleSystem.BLL.Services;
+
 
 public class ClassroomService : IClassroomService
 {
@@ -16,12 +19,48 @@ public class ClassroomService : IClassroomService
         _mapper = mapper;
     }
 
-    public Task<IEnumerable<ClassroomDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<ClassroomDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<ClassroomDto> CreateAsync(ClassroomDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(ClassroomDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
+    public async Task<IEnumerable<ClassroomDto>> GetAllAsync()
+    {
+        var items = await _uow.Classrooms.GetAllAsync();
+        return _mapper.Map<IEnumerable<ClassroomDto>>(items);
+    }
+
+    public async Task<ClassroomDto> GetByIdAsync(int id)
+    {
+        var item = await _uow.Classrooms.GetByIdAsync(id);
+        if (item == null) throw new NotFoundException($"Аудиторію з ID {id} не знайдено.");
+        return _mapper.Map<ClassroomDto>(item);
+    }
+
+    public async Task<ClassroomDto> CreateAsync(ClassroomDto dto)
+    {
+        var entity = _mapper.Map<Classroom>(dto);
+        await _uow.Classrooms.AddAsync(entity);
+        await _uow.SaveAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task UpdateAsync(ClassroomDto dto)
+    {
+        var entity = await _uow.Classrooms.GetByIdAsync(dto.Id);
+        if (entity == null) throw new NotFoundException($"Аудиторію з ID {dto.Id} не знайдено для оновлення.");
+
+        _mapper.Map(dto, entity);
+        _uow.Classrooms.Update(entity);
+        await _uow.SaveAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _uow.Classrooms.GetByIdAsync(id);
+        if (entity == null) throw new NotFoundException($"Аудиторію з ID {id} не знайдено для видалення.");
+
+        _uow.Classrooms.Delete(entity);
+        await _uow.SaveAsync();
+    }
 }
+
 
 public class GroupService : IGroupService
 {
@@ -34,12 +73,48 @@ public class GroupService : IGroupService
         _mapper = mapper;
     }
 
-    public Task<IEnumerable<GroupDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<GroupDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<GroupDto> CreateAsync(GroupDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(GroupDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
+    public async Task<IEnumerable<GroupDto>> GetAllAsync()
+    {
+        var items = await _uow.Groups.GetAllAsync();
+        return _mapper.Map<IEnumerable<GroupDto>>(items);
+    }
+
+    public async Task<GroupDto> GetByIdAsync(int id)
+    {
+        var item = await _uow.Groups.GetByIdAsync(id);
+        if (item == null) throw new NotFoundException($"Групу з ID {id} не знайдено.");
+        return _mapper.Map<GroupDto>(item);
+    }
+
+    public async Task<GroupDto> CreateAsync(GroupDto dto)
+    {
+        var entity = _mapper.Map<Group>(dto);
+        await _uow.Groups.AddAsync(entity);
+        await _uow.SaveAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task UpdateAsync(GroupDto dto)
+    {
+        var entity = await _uow.Groups.GetByIdAsync(dto.Id);
+        if (entity == null) throw new NotFoundException($"Групу з ID {dto.Id} не знайдено для оновлення.");
+
+        _mapper.Map(dto, entity);
+        _uow.Groups.Update(entity);
+        await _uow.SaveAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _uow.Groups.GetByIdAsync(id);
+        if (entity == null) throw new NotFoundException($"Групу з ID {id} не знайдено для видалення.");
+
+        _uow.Groups.Delete(entity);
+        await _uow.SaveAsync();
+    }
 }
+
 
 public class TeacherService : ITeacherService
 {
@@ -52,12 +127,48 @@ public class TeacherService : ITeacherService
         _mapper = mapper;
     }
 
-    public Task<IEnumerable<TeacherDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<TeacherDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<TeacherDto> CreateAsync(TeacherDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(TeacherDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
+    public async Task<IEnumerable<TeacherDto>> GetAllAsync()
+    {
+        var items = await _uow.Teachers.GetAllAsync();
+        return _mapper.Map<IEnumerable<TeacherDto>>(items);
+    }
+
+    public async Task<TeacherDto> GetByIdAsync(int id)
+    {
+        var item = await _uow.Teachers.GetByIdAsync(id);
+        if (item == null) throw new NotFoundException($"Викладача з ID {id} не знайдено.");
+        return _mapper.Map<TeacherDto>(item);
+    }
+
+    public async Task<TeacherDto> CreateAsync(TeacherDto dto)
+    {
+        var entity = _mapper.Map<Teacher>(dto);
+        await _uow.Teachers.AddAsync(entity);
+        await _uow.SaveAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task UpdateAsync(TeacherDto dto)
+    {
+        var entity = await _uow.Teachers.GetByIdAsync(dto.Id);
+        if (entity == null) throw new NotFoundException($"Викладача з ID {dto.Id} не знайдено для оновлення.");
+
+        _mapper.Map(dto, entity);
+        _uow.Teachers.Update(entity);
+        await _uow.SaveAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _uow.Teachers.GetByIdAsync(id);
+        if (entity == null) throw new NotFoundException($"Викладача з ID {id} не знайдено для видалення.");
+
+        _uow.Teachers.Delete(entity);
+        await _uow.SaveAsync();
+    }
 }
+
 
 public class SubjectService : ISubjectService
 {
@@ -70,12 +181,48 @@ public class SubjectService : ISubjectService
         _mapper = mapper;
     }
 
-    public Task<IEnumerable<SubjectDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<SubjectDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<SubjectDto> CreateAsync(SubjectDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(SubjectDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
+    public async Task<IEnumerable<SubjectDto>> GetAllAsync()
+    {
+        var items = await _uow.Subjects.GetAllAsync();
+        return _mapper.Map<IEnumerable<SubjectDto>>(items);
+    }
+
+    public async Task<SubjectDto> GetByIdAsync(int id)
+    {
+        var item = await _uow.Subjects.GetByIdAsync(id);
+        if (item == null) throw new NotFoundException($"Предмет з ID {id} не знайдено.");
+        return _mapper.Map<SubjectDto>(item);
+    }
+
+    public async Task<SubjectDto> CreateAsync(SubjectDto dto)
+    {
+        var entity = _mapper.Map<Subject>(dto);
+        await _uow.Subjects.AddAsync(entity);
+        await _uow.SaveAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task UpdateAsync(SubjectDto dto)
+    {
+        var entity = await _uow.Subjects.GetByIdAsync(dto.Id);
+        if (entity == null) throw new NotFoundException($"Предмет з ID {dto.Id} не знайдено для оновлення.");
+
+        _mapper.Map(dto, entity);
+        _uow.Subjects.Update(entity);
+        await _uow.SaveAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _uow.Subjects.GetByIdAsync(id);
+        if (entity == null) throw new NotFoundException($"Предмет з ID {id} не знайдено для видалення.");
+
+        _uow.Subjects.Delete(entity);
+        await _uow.SaveAsync();
+    }
 }
+
 
 public class DepartmentService : IDepartmentService
 {
@@ -88,9 +235,44 @@ public class DepartmentService : IDepartmentService
         _mapper = mapper;
     }
 
-    public Task<IEnumerable<DepartmentDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<DepartmentDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<DepartmentDto> CreateAsync(DepartmentDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(DepartmentDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
+    public async Task<IEnumerable<DepartmentDto>> GetAllAsync()
+    {
+        var items = await _uow.Departments.GetAllAsync();
+        return _mapper.Map<IEnumerable<DepartmentDto>>(items);
+    }
+
+    public async Task<DepartmentDto> GetByIdAsync(int id)
+    {
+        var item = await _uow.Departments.GetByIdAsync(id);
+        if (item == null) throw new NotFoundException($"Кафедру з ID {id} не знайдено.");
+        return _mapper.Map<DepartmentDto>(item);
+    }
+
+    public async Task<DepartmentDto> CreateAsync(DepartmentDto dto)
+    {
+        var entity = _mapper.Map<Department>(dto);
+        await _uow.Departments.AddAsync(entity);
+        await _uow.SaveAsync();
+        dto.Id = entity.Id;
+        return dto;
+    }
+
+    public async Task UpdateAsync(DepartmentDto dto)
+    {
+        var entity = await _uow.Departments.GetByIdAsync(dto.Id);
+        if (entity == null) throw new NotFoundException($"Кафедру з ID {dto.Id} не знайдено для оновлення.");
+
+        _mapper.Map(dto, entity);
+        _uow.Departments.Update(entity);
+        await _uow.SaveAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _uow.Departments.GetByIdAsync(id);
+        if (entity == null) throw new NotFoundException($"Кафедру з ID {id} не знайдено для видалення.");
+
+        _uow.Departments.Delete(entity);
+        await _uow.SaveAsync();
+    }
 }
