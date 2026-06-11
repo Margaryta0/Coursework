@@ -31,105 +31,168 @@ public class ScheduleServiceTests
     }
 
     [Fact]
-    public async Task CreateAsync_ValidDto_CallsSaveAndReturnsDto()
+    public async Task GetByIdAsync_ExistingId_ReturnsDto()
     {
         // Arrange
-        // TODO: setup mocks, prepare dto
+        var entry = new ScheduleEntry
+        {
+            Id = 1,
+            GroupId = 1,
+            TeacherId = 1,
+            ClassroomId = 1,
+            SubjectId = 1
+        };
+        _mockScheduleRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(entry);
 
         // Act
-        // TODO: call _scheduleService.CreateAsync(dto)
+        var result = await _scheduleService.GetByIdAsync(1);
 
         // Assert
-        // TODO: verify _mockUow.Verify(u => u.SaveAsync(), Times.Once)
-        throw new NotImplementedException();
+        Assert.NotNull(result);
+        Assert.Equal(1, result.Id);
     }
 
     [Fact]
-    public async Task CreateAsync_ConflictingEntry_ThrowsScheduleConflictException()
+    public async Task GetByIdAsync_NonExistentId_ThrowsNotFoundException()
     {
         // Arrange
-        // TODO: setup _mockScheduleRepo HasConflictAsync to return true
+        _mockScheduleRepo.Setup(r => r.GetByIdAsync(99)).ReturnsAsync((ScheduleEntry?)null);
 
         // Act & Assert
-        // TODO: await Assert.ThrowsAsync<ScheduleConflictException>(...)
-        throw new NotImplementedException();
-    }
-
-    [Fact]
-    public async Task DeleteAsync_NonExistentId_ThrowsNotFoundException()
-    {
-        // Arrange
-        // TODO: setup _mockScheduleRepo GetByIdAsync to return null
-
-        // Act & Assert
-        // TODO: await Assert.ThrowsAsync<NotFoundException>(...)
-        throw new NotImplementedException();
-    }
-
-    [Fact]
-    public async Task DeleteAsync_ValidId_CallsDeleteAndSave()
-    {
-        // Arrange
-        // TODO: setup mock to return a valid entry
-
-        // Act
-        // TODO: call _scheduleService.DeleteAsync(id)
-
-        // Assert
-        // TODO: verify Delete and SaveAsync were called
-        throw new NotImplementedException();
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _scheduleService.GetByIdAsync(99));
     }
 
     [Fact]
     public async Task GetByGroupAsync_ValidId_ReturnsEntries()
     {
         // Arrange
-        // TODO: setup mock to return a list of entries
+        var entries = new List<ScheduleEntry> { new() { Id = 1, GroupId = 1 } };
+        _mockScheduleRepo.Setup(r => r.GetByGroupAsync(1)).ReturnsAsync(entries);
 
         // Act
-        // TODO: call _scheduleService.GetByGroupAsync(groupId)
+        var result = await _scheduleService.GetByGroupAsync(1);
 
         // Assert
-        // TODO: Assert.NotEmpty(result)
-        throw new NotImplementedException();
+        Assert.NotEmpty(result);
     }
 
     [Fact]
-    public async Task GetByGroupAsync_EmptyResult_ReturnsEmptyList()
+    public async Task GetByGroupAsync_NoEntries_ReturnsEmptyList()
     {
         // Arrange
-        // TODO: setup mock to return empty list
+        _mockScheduleRepo.Setup(r => r.GetByGroupAsync(1))
+            .ReturnsAsync(new List<ScheduleEntry>());
 
         // Act
-        // TODO: call _scheduleService.GetByGroupAsync(groupId)
+        var result = await _scheduleService.GetByGroupAsync(1);
 
         // Assert
-        // TODO: Assert.Empty(result)
-        throw new NotImplementedException();
+        Assert.Empty(result);
     }
 
     [Fact]
-    public async Task GetFilteredAsync_WithFilters_PassesCorrectParamsToRepo()
+    public async Task CreateAsync_ValidDto_CallsSaveAndReturnsDto()
     {
         // Arrange
-        // TODO: prepare filter dto
+        var dto = new ScheduleEntryDto
+        { SubjectId = 1, TeacherId = 1, GroupId = 1, ClassroomId = 1 };
+        _mockUow.Setup(u => u.Subjects.GetByIdAsync(1))
+            .ReturnsAsync(new Subject { Id = 1 });
+        _mockUow.Setup(u => u.Teachers.GetByIdAsync(1))
+            .ReturnsAsync(new Teacher { Id = 1 });
+        _mockUow.Setup(u => u.Groups.GetByIdAsync(1))
+            .ReturnsAsync(new Group { Id = 1 });
+        _mockUow.Setup(u => u.Classrooms.GetByIdAsync(1))
+            .ReturnsAsync(new Classroom { Id = 1 });
+        _mockScheduleRepo.Setup(r => r.HasConflictAsync(It.IsAny<ScheduleEntry>()))
+            .ReturnsAsync(false);
 
         // Act
-        // TODO: call _scheduleService.GetFilteredAsync(filter)
+        var result = await _scheduleService.CreateAsync(dto);
 
         // Assert
-        // TODO: verify repo was called with correct params
-        throw new NotImplementedException();
+        _mockUow.Verify(u => u.SaveAsync(), Times.Once);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ConflictingEntry_ThrowsScheduleConflictException()
+    {
+        // Arrange
+        var dto = new ScheduleEntryDto
+        { SubjectId = 1, TeacherId = 1, GroupId = 1, ClassroomId = 1 };
+        _mockUow.Setup(u => u.Subjects.GetByIdAsync(1))
+            .ReturnsAsync(new Subject { Id = 1 });
+        _mockUow.Setup(u => u.Teachers.GetByIdAsync(1))
+            .ReturnsAsync(new Teacher { Id = 1 });
+        _mockUow.Setup(u => u.Groups.GetByIdAsync(1))
+            .ReturnsAsync(new Group { Id = 1 });
+        _mockUow.Setup(u => u.Classrooms.GetByIdAsync(1))
+            .ReturnsAsync(new Classroom { Id = 1 });
+        _mockScheduleRepo.Setup(r => r.HasConflictAsync(It.IsAny<ScheduleEntry>()))
+            .ReturnsAsync(true);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ScheduleConflictException>(() =>
+            _scheduleService.CreateAsync(dto));
+    }
+
+    [Fact]
+    public async Task CreateAsync_NonExistentGroupId_ThrowsNotFoundException()
+    {
+        // Arrange
+        var dto = new ScheduleEntryDto
+        { SubjectId = 1, TeacherId = 1, GroupId = 99, ClassroomId = 1 };
+        _mockUow.Setup(u => u.Subjects.GetByIdAsync(1))
+            .ReturnsAsync(new Subject { Id = 1 });
+        _mockUow.Setup(u => u.Teachers.GetByIdAsync(1))
+            .ReturnsAsync(new Teacher { Id = 1 });
+        _mockUow.Setup(u => u.Groups.GetByIdAsync(99))
+            .ReturnsAsync((Group?)null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _scheduleService.CreateAsync(dto));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ValidId_CallsDeleteAndSave()
+    {
+        // Arrange
+        var entry = new ScheduleEntry { Id = 1 };
+        _mockScheduleRepo.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(entry);
+
+        // Act
+        await _scheduleService.DeleteAsync(1);
+
+        // Assert
+        _mockScheduleRepo.Verify(r => r.Delete(entry), Times.Once);
+        _mockUow.Verify(u => u.SaveAsync(), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NonExistentId_ThrowsNotFoundException()
+    {
+        // Arrange
+        _mockScheduleRepo.Setup(r => r.GetByIdAsync(99))
+            .ReturnsAsync((ScheduleEntry?)null);
+
+        // Act & Assert
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _scheduleService.DeleteAsync(99));
     }
 
     [Fact]
     public async Task UpdateAsync_NonExistentId_ThrowsNotFoundException()
     {
         // Arrange
-        // TODO: setup mock to return null
+        var dto = new ScheduleEntryDto { Id = 99 };
+        _mockScheduleRepo.Setup(r => r.GetByIdAsync(99))
+            .ReturnsAsync((ScheduleEntry?)null);
 
         // Act & Assert
-        // TODO: await Assert.ThrowsAsync<NotFoundException>(...)
-        throw new NotImplementedException();
+        await Assert.ThrowsAsync<NotFoundException>(() =>
+            _scheduleService.UpdateAsync(dto));
     }
 }
