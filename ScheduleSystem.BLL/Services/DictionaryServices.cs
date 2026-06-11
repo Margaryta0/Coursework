@@ -7,6 +7,7 @@ using ScheduleSystem.DAL.Interfaces;
 
 namespace ScheduleSystem.BLL.Services;
 
+
 public class ClassroomService : IClassroomService
 {
     private readonly IUnitOfWork _uow;
@@ -59,6 +60,7 @@ public class ClassroomService : IClassroomService
         await _uow.SaveAsync();
     }
 }
+
 
 public class GroupService : IGroupService
 {
@@ -113,6 +115,7 @@ public class GroupService : IGroupService
     }
 }
 
+
 public class TeacherService : ITeacherService
 {
     private readonly IUnitOfWork _uow;
@@ -166,6 +169,7 @@ public class TeacherService : ITeacherService
     }
 }
 
+
 public class SubjectService : ISubjectService
 {
     private readonly IUnitOfWork _uow;
@@ -218,6 +222,7 @@ public class SubjectService : ISubjectService
         await _uow.SaveAsync();
     }
 }
+
 
 public class DepartmentService : IDepartmentService
 {
