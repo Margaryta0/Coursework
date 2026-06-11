@@ -139,6 +139,7 @@ public class TeacherService : ITeacherService
         if (item == null) throw new NotFoundException($"Викладача з ID {id} не знайдено.");
         return _mapper.Map<TeacherDto>(item);
     }
+
     public async Task<TeacherDto> CreateAsync(TeacherDto dto)
     {
         var entity = _mapper.Map<Teacher>(dto);
