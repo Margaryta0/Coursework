@@ -22,8 +22,8 @@ namespace ScheduleSystem.DAL
             context.SaveChanges();
 
 
-            var classroom1 = new Classroom { Number = "403-г", Capacity = 30, Building = "Головний корпус" };
-            var classroom2 = new Classroom { Number = "102", Capacity = 80, Building = "Лекційний корпус" };
+            var classroom1 = new Classroom { Name = "403-г", Capacity = 30, Building = "Головний корпус" };
+            var classroom2 = new Classroom { Name = "102", Capacity = 80, Building = "Лекційний корпус" };
             context.Classrooms.AddRange(classroom1, classroom2);
 
 
@@ -61,7 +61,7 @@ namespace ScheduleSystem.DAL
                 ClassroomId = classroom1.Id,
                 DayOfWeek = SchoolDayOfWeek.Monday,
                 LessonNumber = LessonNumber.First,
-                WeekType = WeekType.Numerator,
+                WeekType = WeekType.Odd,
                 Semester = 2,
                 Year = 2026
             };

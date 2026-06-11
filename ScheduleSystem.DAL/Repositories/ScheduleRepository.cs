@@ -91,20 +91,20 @@ namespace ScheduleSystem.DAL.Repositories
             return await query.OrderBy(s => s.DayOfWeek).ThenBy(s => s.LessonNumber).ToListAsync();
         }
 
-        public async Task<bool> HasConflictAsync(ScheduleEntry entry)
-        {
-            return await _context.ScheduleEntries.AnyAsync(s =>
-                s.Id != entry.Id && 
-                s.DayOfWeek == entry.DayOfWeek &&
-                s.LessonNumber == entry.LessonNumber &&
-                s.Semester == entry.Semester &&
-                s.Year == entry.Year &&
-                (s.WeekType == entry.WeekType  s.WeekType == WeekType.Both  entry.WeekType == WeekType.Both) &&
-                (
-                    s.ClassroomId == entry.ClassroomId || 
-                    s.TeacherId == entry.TeacherId ||     
-                    s.GroupId == entry.GroupId            
-                ));
-        }
+       public async Task<bool> HasConflictAsync(ScheduleEntry entry)
+{
+    return await _context.ScheduleEntries.AnyAsync(s =>
+        s.Id != entry.Id && 
+        s.DayOfWeek == entry.DayOfWeek &&
+        s.LessonNumber == entry.LessonNumber &&
+        s.Semester == entry.Semester &&
+        s.Year == entry.Year &&
+        (s.WeekType == entry.WeekType || s.WeekType == WeekType.Both || entry.WeekType == WeekType.Both) &&
+        (
+            s.ClassroomId == entry.ClassroomId || 
+            s.TeacherId == entry.TeacherId ||     
+            s.GroupId == entry.GroupId            
+        ));
+}
     }
 }
