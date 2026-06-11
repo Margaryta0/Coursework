@@ -7,6 +7,7 @@ using ScheduleSystem.BLL.Models;
 using ScheduleSystem.BLL.Services;
 using ScheduleSystem.DAL.Entities;
 using ScheduleSystem.DAL.Interfaces;
+using Xunit;
 
 namespace ScheduleSystem.Tests;
 
