@@ -1,96 +1,69 @@
-using AutoMapper;
-using ScheduleSystem.BLL.Interfaces;
-using ScheduleSystem.BLL.Models;
-using ScheduleSystem.DAL.Interfaces;
+using System.Linq;
+using ScheduleSystem.DAL.Entities;
+using ScheduleSystem.DAL.Enums;
 
-namespace ScheduleSystem.BLL.Services;
-
-public class ClassroomService : IClassroomService
+namespace ScheduleSystem.DAL
 {
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
-    public ClassroomService(IUnitOfWork uow, IMapper mapper)
+    public static class DbInitializer
     {
-        _uow = uow;
-        _mapper = mapper;
+        public static void Seed(AppDbContext context)
+        {
+            context.Database.EnsureCreated();
+
+            if (context.Users.Any())
+            {
+                return; 
+            }
+
+
+            var department = new Department { Name = "Кафедра Кібербезпеки та Програмування" };
+            context.Departments.Add(department);
+            context.SaveChanges();
+
+
+            var classroom1 = new Classroom { Number = "403-г", Capacity = 30, Building = "Головний корпус" };
+            var classroom2 = new Classroom { Number = "102", Capacity = 80, Building = "Лекційний корпус" };
+            context.Classrooms.AddRange(classroom1, classroom2);
+
+
+            var subject1 = new Subject { Name = "Information Security Management" };
+            var subject2 = new Subject { Name = "Cryptology" };
+            context.Subjects.AddRange(subject1, subject2);
+            context.SaveChanges();
+
+
+            var group = new Group { Name = "ПІ-215", DepartmentId = department.Id };
+            context.Groups.Add(group);
+            context.SaveChanges();
+
+
+            var teacher = new Teacher { FullName = "Ковальчук Олег Петрович", DepartmentId = department.Id };
+            context.Teachers.Add(teacher);
+            context.SaveChanges();
+
+            var users = new[]
+            {
+                new User { Login = "admin", PasswordHash = "admin123", Role = UserRole.Admin },
+                new User { Login = "teacher_kovalchuk", PasswordHash = "teacher123", Role = UserRole.Teacher, TeacherId = teacher.Id },
+                new User { Login = "student_maxim", PasswordHash = "student123", Role = UserRole.Student, GroupId = group.Id }
+            };
+            context.Users.AddRange(users);
+            context.SaveChanges();
+
+            var scheduleEntry = new ScheduleEntry
+            {
+                SubjectId = subject1.Id,
+                TeacherId = teacher.Id,
+                GroupId = group.Id,
+                ClassroomId = classroom1.Id,
+                DayOfWeek = SchoolDayOfWeek.Monday,
+                LessonNumber = LessonNumber.First,
+                WeekType = WeekType.Numerator,
+                Semester = 2,
+                Year = 2026
+            };
+            context.ScheduleEntries.Add(scheduleEntry);
+            context.SaveChanges();
+        }
     }
-
-    public Task<IEnumerable<ClassroomDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<ClassroomDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<ClassroomDto> CreateAsync(ClassroomDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(ClassroomDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
-}
-
-public class GroupService : IGroupService
-{
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
-    public GroupService(IUnitOfWork uow, IMapper mapper)
-    {
-        _uow = uow;
-        _mapper = mapper;
-    }
-
-    public Task<IEnumerable<GroupDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<GroupDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<GroupDto> CreateAsync(GroupDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(GroupDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
-}
-
-public class TeacherService : ITeacherService
-{
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
-    public TeacherService(IUnitOfWork uow, IMapper mapper)
-    {
-        _uow = uow;
-        _mapper = mapper;
-    }
-
-    public Task<IEnumerable<TeacherDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<TeacherDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<TeacherDto> CreateAsync(TeacherDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(TeacherDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
-}
-
-public class SubjectService : ISubjectService
-{
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
-    public SubjectService(IUnitOfWork uow, IMapper mapper)
-    {
-        _uow = uow;
-        _mapper = mapper;
-    }
-
-    public Task<IEnumerable<SubjectDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<SubjectDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<SubjectDto> CreateAsync(SubjectDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(SubjectDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
-}
-
-public class DepartmentService : IDepartmentService
-{
-    private readonly IUnitOfWork _uow;
-    private readonly IMapper _mapper;
-
-    public DepartmentService(IUnitOfWork uow, IMapper mapper)
-    {
-        _uow = uow;
-        _mapper = mapper;
-    }
-
-    public Task<IEnumerable<DepartmentDto>> GetAllAsync() => throw new NotImplementedException();
-    public Task<DepartmentDto> GetByIdAsync(int id) => throw new NotImplementedException();
-    public Task<DepartmentDto> CreateAsync(DepartmentDto dto) => throw new NotImplementedException();
-    public Task UpdateAsync(DepartmentDto dto) => throw new NotImplementedException();
-    public Task DeleteAsync(int id) => throw new NotImplementedException();
 }
