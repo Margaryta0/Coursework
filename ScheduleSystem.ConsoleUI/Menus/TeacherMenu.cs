@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+
 namespace ScheduleSystem.ConsoleUI.Menus;
 
 public class TeacherMenu
@@ -31,6 +34,41 @@ public class TeacherMenu
         }
     }
 
-    private Task ShowMyScheduleAsync() => throw new NotImplementedException();
-    private Task ShowGroupScheduleAsync() => throw new NotImplementedException();
+    private async Task ShowMyScheduleAsync()
+    {
+        Console.Clear();
+        Console.WriteLine("=== МІЙ РОЗКЛАД ===");
+        try
+        {
+            var result = await _client.GetAsync<object>("schedule/teacher/1");
+            Console.WriteLine("\nВаш розклад занять:");
+            Console.WriteLine(result?.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Помилка: {ex.Message}");
+        }
+        Console.WriteLine("\nНатисніть будь-яку клавішу...");
+        Console.ReadKey();
+    }
+
+    private async Task ShowGroupScheduleAsync()
+    {
+        Console.Clear();
+        Console.WriteLine("=== РОЗКЛАД ГРУПИ ===");
+        Console.Write("Введіть ID групи: ");
+        string? groupId = Console.ReadLine();
+        try
+        {
+            var result = await _client.GetAsync<object>($"schedule/group/{groupId}");
+            Console.WriteLine($"\nРозклад групи ID {groupId}:");
+            Console.WriteLine(result?.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Помилка: {ex.Message}");
+        }
+        Console.WriteLine("\nНатисніть будь-яку клавішу...");
+        Console.ReadKey();
+    }
 }

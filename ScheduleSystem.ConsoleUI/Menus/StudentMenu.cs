@@ -1,3 +1,6 @@
+using System;
+using System.Threading.Tasks;
+
 namespace ScheduleSystem.ConsoleUI.Menus;
 
 public class StudentMenu
@@ -29,5 +32,21 @@ public class StudentMenu
         }
     }
 
-    private Task ShowMyScheduleAsync() => throw new NotImplementedException();
+    private async Task ShowMyScheduleAsync()
+    {
+        Console.Clear();
+        Console.WriteLine("=== МІЙ РОЗКЛАД ===");
+        try
+        {
+            var result = await _client.GetAsync<object>("schedule/group/1");
+            Console.WriteLine("\nАктуальний розклад вашої групи:");
+            Console.WriteLine(result?.ToString());
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Помилка: {ex.Message}");
+        }
+        Console.WriteLine("\nНатисніть будь-яку клавішу...");
+        Console.ReadKey();
+    }
 }
