@@ -83,6 +83,14 @@ public class MainMenu
                         var studentMenu = new StudentMenu(_client);
                         await studentMenu.RunAsync();
                         break;
+                    case "Admin":
+                        var adminMenu = new AdminMenu(_client);
+                        await adminMenu.RunAsync();
+                        break;
+                    case "Management":
+                        var managementMenu = new ManagementMenu(_client);
+                        await managementMenu.RunAsync();
+                        break;
                     default:
                         Console.WriteLine("\nМеню для вашої ролі недоступне з консолі.");
                         Console.ReadKey();
