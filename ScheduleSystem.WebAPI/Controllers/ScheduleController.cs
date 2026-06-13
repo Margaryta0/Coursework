@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleSystem.BLL.Interfaces;
+using ScheduleSystem.BLL.Models;
 using ScheduleSystem.WebAPI.Models;
 
 namespace ScheduleSystem.WebAPI.Controllers;
@@ -20,52 +21,94 @@ public class ScheduleController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetFiltered([FromQuery] FilterRequest filter)
     {
-        // TODO: map FilterRequest → ScheduleFilterDto, call service
-        throw new NotImplementedException();
+        var filterDto = new ScheduleFilterDto
+        {
+            GroupId = filter.GroupId,
+            TeacherId = filter.TeacherId,
+            ClassroomId = filter.ClassroomId,
+            SubjectId = filter.SubjectId,
+            DayOfWeek = filter.DayOfWeek,
+            WeekType = filter.WeekType
+        };
+
+        var entries = await _scheduleService.GetFilteredAsync(filterDto);
+        return Ok(entries.Select(ToResponse));
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        var entry = await _scheduleService.GetByIdAsync(id);
+        return Ok(ToResponse(entry));
     }
 
     [HttpGet("group/{groupId:int}")]
     public async Task<IActionResult> GetByGroup(int groupId)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        var entries = await _scheduleService.GetByGroupAsync(groupId);
+        return Ok(entries.Select(ToResponse));
     }
 
     [HttpGet("teacher/{teacherId:int}")]
     public async Task<IActionResult> GetByTeacher(int teacherId)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        var entries = await _scheduleService.GetByTeacherAsync(teacherId);
+        return Ok(entries.Select(ToResponse));
     }
 
     [HttpPost]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Create([FromBody] ScheduleEntryRequest request)
     {
-        // TODO: map request → ScheduleEntryDto, call service, return 201
-        throw new NotImplementedException();
+        var dto = ToDto(request);
+        var created = await _scheduleService.CreateAsync(dto);
+        var response = ToResponse(created);
+        return CreatedAtAction(nameof(GetById), new { id = response.Id }, response);
     }
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Update(int id, [FromBody] ScheduleEntryRequest request)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        var dto = ToDto(request);
+        dto.Id = id;
+        await _scheduleService.UpdateAsync(dto);
+        return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(int id)
     {
-        // TODO: implement
-        throw new NotImplementedException();
+        await _scheduleService.DeleteAsync(id);
+        return NoContent();
     }
+
+    private static ScheduleEntryDto ToDto(ScheduleEntryRequest request) => new()
+    {
+        SubjectId = request.SubjectId,
+        TeacherId = request.TeacherId,
+        GroupId = request.GroupId,
+        ClassroomId = request.ClassroomId,
+        DayOfWeek = request.DayOfWeek,
+        LessonNumber = request.LessonNumber,
+        WeekType = request.WeekType,
+        Semester = request.Semester,
+        Year = request.Year
+    };
+
+    private static ScheduleEntryResponse ToResponse(ScheduleEntryDto dto) => new()
+    {
+        Id = dto.Id,
+        SubjectName = dto.SubjectName,
+        TeacherFullName = dto.TeacherFullName,
+        GroupName = dto.GroupName,
+        ClassroomName = dto.ClassroomName,
+        DayOfWeek = dto.DayOfWeek.ToString(),
+        LessonNumber = (int)dto.LessonNumber,
+        WeekType = dto.WeekType.ToString(),
+        Semester = dto.Semester,
+        Year = dto.Year
+    };
 }
+

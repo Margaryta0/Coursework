@@ -1,7 +1,7 @@
 using ScheduleSystem.ConsoleUI;
 using ScheduleSystem.ConsoleUI.Menus;
 
-const string ApiBaseUrl = "https://localhost:5001/";
+const string ApiBaseUrl = "https://localhost:61625/";
 
 var client = new ApiClient(ApiBaseUrl);
 var menu = new MainMenu(client);

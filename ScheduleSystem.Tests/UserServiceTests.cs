@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Moq;
 using ScheduleSystem.BLL.Exceptions;
 using ScheduleSystem.BLL.Interfaces;
@@ -6,6 +6,8 @@ using ScheduleSystem.BLL.Mapping;
 using ScheduleSystem.BLL.Services;
 using ScheduleSystem.DAL.Entities;
 using ScheduleSystem.DAL.Interfaces;
+using Xunit;
+using Microsoft.Extensions.Configuration;
 
 namespace ScheduleSystem.Tests;
 
@@ -25,53 +27,92 @@ public class UserServiceTests
         var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
         _mapper = config.CreateMapper();
 
-        _userService = new UserService(_mockUow.Object, _mapper);
+        // Мок конфігурації — потрібні значення для генерації JWT
+        var configData = new Dictionary<string, string?>
+    {
+        { "Jwt:Key", "test-secret-key-at-least-32-characters-long" },
+        { "Jwt:Issuer", "ScheduleSystem" },
+        { "Jwt:Audience", "ScheduleSystemUsers" },
+        { "Jwt:ExpiresInMinutes", "60" }
+    };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
+        _userService = new UserService(_mockUow.Object, _mapper, configuration);
     }
 
     [Fact]
     public async Task LoginAsync_ValidCredentials_ReturnsJwtToken()
     {
-        // Arrange
-        // TODO: setup mock to return user with valid BCrypt hash
 
-        // Act
-        // TODO: var token = await _userService.LoginAsync(login, password)
+        var login = "maxim_admin";
+        var password = "correct_password123";
+        var passwordHash = BCrypt.Net.BCrypt.HashPassword(password); 
 
-        // Assert
-        // TODO: Assert.NotEmpty(token)
-        throw new NotImplementedException();
+        var userList = new List<User>
+        {
+            new User { Id = 1, Login = login, PasswordHash = passwordHash, Role = ScheduleSystem.DAL.Enums.UserRole.Admin }
+        };
+
+
+        _mockUserRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(userList);
+
+   
+        var token = await _userService.LoginAsync(login, password);
+
+
+        Assert.NotNull(token);
+        Assert.NotEmpty(token);
     }
 
     [Fact]
     public async Task LoginAsync_WrongPassword_ThrowsValidationException()
     {
-        // Arrange
-        // TODO: setup mock to return user with mismatching hash
 
-        // Act & Assert
-        // TODO: await Assert.ThrowsAsync<ValidationException>(...)
-        throw new NotImplementedException();
+        var login = "maxim_admin";
+        var wrongPassword = "wrong_password";
+        var correctPasswordHash = BCrypt.Net.BCrypt.HashPassword("correct_password123");
+
+        var userList = new List<User>
+        {
+            new User { Id = 1, Login = login, PasswordHash = correctPasswordHash, Role = ScheduleSystem.DAL.Enums.UserRole.Student }
+        };
+
+        _mockUserRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(userList);
+
+
+        await Assert.ThrowsAsync<ValidationException>(() => 
+            _userService.LoginAsync(login, wrongPassword));
     }
 
     [Fact]
     public async Task LoginAsync_NonExistentUser_ThrowsNotFoundException()
     {
-        // Arrange
-        // TODO: setup mock to return null for user lookup
 
-        // Act & Assert
-        // TODO: await Assert.ThrowsAsync<NotFoundException>(...)
-        throw new NotImplementedException();
+        var login = "non_existent_user";
+
+        _mockUserRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<User>());
+
+
+        await Assert.ThrowsAsync<NotFoundException>(() => 
+            _userService.LoginAsync(login, "anyPassword123"));
     }
 
     [Fact]
     public async Task CreateAsync_DuplicateLogin_ThrowsValidationException()
     {
-        // Arrange
-        // TODO: setup mock to return existing user with same login
 
-        // Act & Assert
-        // TODO: await Assert.ThrowsAsync<ValidationException>(...)
-        throw new NotImplementedException();
+        var duplicateLogin = "existing_user";
+        var existingUser = new User { Id = 5, Login = duplicateLogin };
+        
+        _mockUserRepo.Setup(r => r.GetAllAsync()).ReturnsAsync(new List<User> { existingUser });
+
+
+        var dto = new ScheduleSystem.BLL.Models.UserDto { Login = duplicateLogin, Role = ScheduleSystem.DAL.Enums.UserRole.Teacher };
+
+
+        await Assert.ThrowsAsync<ValidationException>(() => 
+            _userService.CreateAsync(dto, "password123"));
     }
 }

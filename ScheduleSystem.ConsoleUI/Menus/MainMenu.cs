@@ -1,3 +1,9 @@
+using System;
+using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+
 namespace ScheduleSystem.ConsoleUI.Menus;
 
 public class MainMenu
@@ -36,9 +42,71 @@ public class MainMenu
 
     private async Task LoginAsync()
     {
-        // TODO: read login/password, call POST /api/auth/login
-        // save token via _client.SetToken(token)
-        // redirect to role-specific menu
-        throw new NotImplementedException();
+        Console.Clear();
+        Console.WriteLine("=== АВТОРИЗАЦІЯ ===");
+        Console.Write("Введіть логін: ");
+        string? login = Console.ReadLine();
+        Console.Write("Введіть пароль: ");
+        string? password = Console.ReadLine();
+
+        if (string.IsNullOrWhiteSpace(login) || string.IsNullOrWhiteSpace(password))
+        {
+            Console.WriteLine("\nЛогін або пароль не можуть бути порожніми.");
+            Console.ReadKey();
+            return;
+        }
+
+        try
+        {
+            var loginBody = new { Login = login, Password = password };
+            var response = await _client.PostAsync<TokenResponse>("api/auth/login", loginBody);
+
+            if (response != null && !string.IsNullOrEmpty(response.Token))
+            {
+                _client.SetToken(response.Token);
+
+                var handler = new JwtSecurityTokenHandler();
+                var jwtToken = handler.ReadJwtToken(response.Token);
+                var roleClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role || c.Type == "role")?.Value;
+
+                Console.WriteLine($"\nВаша роль: {roleClaim}");
+                Console.WriteLine("Натисніть будь-яку клавішу для переходу в меню...");
+                Console.ReadKey();
+
+                switch (roleClaim)
+                {
+                    case "Teacher":
+                        var teacherMenu = new TeacherMenu(_client);
+                        await teacherMenu.RunAsync();
+                        break;
+                    case "Student":
+                        var studentMenu = new StudentMenu(_client);
+                        await studentMenu.RunAsync();
+                        break;
+                    case "Admin":
+                        var adminMenu = new AdminMenu(_client);
+                        await adminMenu.RunAsync();
+                        break;
+                    case "Management":
+                        var managementMenu = new ManagementMenu(_client);
+                        await managementMenu.RunAsync();
+                        break;
+                    default:
+                        Console.WriteLine("\nМеню для вашої ролі недоступне з консолі.");
+                        Console.ReadKey();
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\n[Помилка авторизації]: {ex.Message}");
+            Console.ReadKey();
+        }
     }
+}
+
+public class TokenResponse
+{
+    public string Token { get; set; } = null!;
 }
