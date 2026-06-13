@@ -12,14 +12,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Database ──────────────────────────────────────────────────────────────
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// ── DAL ───────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-// ── BLL ───────────────────────────────────────────────────────────────────
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClassroomService, ClassroomService>();
@@ -28,10 +25,8 @@ builder.Services.AddScoped<ITeacherService, TeacherService>();
 builder.Services.AddScoped<ISubjectService, SubjectService>();
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 
-// ── AutoMapper ────────────────────────────────────────────────────────────
 builder.Services.AddAutoMapper(typeof(MappingProfile));
 
-// ── JWT Authentication ────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT key is not configured.");
 
@@ -52,7 +47,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// ── Swagger ───────────────────────────────────────────────────────────────
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ScheduleSystem API", Version = "v1" });
@@ -82,7 +76,6 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
-// ── Middleware pipeline ───────────────────────────────────────────────────
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
@@ -96,7 +89,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// ── Seed database ─────────────────────────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
