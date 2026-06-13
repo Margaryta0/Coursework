@@ -59,7 +59,7 @@ public class MainMenu
         try
         {
             var loginBody = new { Login = login, Password = password };
-            var response = await _client.PostAsync<TokenResponse>("auth/login", loginBody);
+            var response = await _client.PostAsync<TokenResponse>("api/auth/login", loginBody);
 
             if (response != null && !string.IsNullOrEmpty(response.Token))
             {

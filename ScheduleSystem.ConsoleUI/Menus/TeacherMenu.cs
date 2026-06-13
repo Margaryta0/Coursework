@@ -40,7 +40,7 @@ public class TeacherMenu
         Console.WriteLine("=== МІЙ РОЗКЛАД ===");
         try
         {
-            var result = await _client.GetAsync<object>("schedule/teacher/1");
+            var result = await _client.GetAsync<object>("api/schedule/teacher/1");
             Console.WriteLine("\nВаш розклад занять:");
             Console.WriteLine(result?.ToString());
         }
@@ -60,7 +60,7 @@ public class TeacherMenu
         string? groupId = Console.ReadLine();
         try
         {
-            var result = await _client.GetAsync<object>($"schedule/group/{groupId}");
+            var result = await _client.GetAsync<object>($"api/schedule/group/{groupId}");
             Console.WriteLine($"\nРозклад групи ID {groupId}:");
             Console.WriteLine(result?.ToString());
         }

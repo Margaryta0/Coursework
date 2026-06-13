@@ -38,7 +38,7 @@ public class StudentMenu
         Console.WriteLine("=== МІЙ РОЗКЛАД ===");
         try
         {
-            var result = await _client.GetAsync<object>("schedule/group/1");
+            var result = await _client.GetAsync<object>("api/schedule/group/1");
             Console.WriteLine("\nАктуальний розклад вашої групи:");
             Console.WriteLine(result?.ToString());
         }
