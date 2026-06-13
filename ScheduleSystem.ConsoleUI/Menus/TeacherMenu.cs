@@ -1,5 +1,4 @@
-using System;
-using System.Threading.Tasks;
+using ScheduleSystem.DAL.Enums;
 
 namespace ScheduleSystem.ConsoleUI.Menus;
 
@@ -37,17 +36,28 @@ public class TeacherMenu
     private async Task ShowMyScheduleAsync()
     {
         Console.Clear();
-        Console.WriteLine("=== МІЙ РОЗКЛАД ===");
+        Console.WriteLine("=== МІЙ РОЗКЛАД ===\n");
+
         try
         {
-            var result = await _client.GetAsync<object>("api/schedule/teacher/1");
-            Console.WriteLine("\nВаш розклад занять:");
-            Console.WriteLine(result?.ToString());
+            // Дізнаємось власний TeacherId через /api/auth/me (на основі JWT-токена)
+            var me = await _client.GetAsync<CurrentUserView>("api/auth/me");
+            if (me?.TeacherId is null)
+            {
+                Console.WriteLine("Не вдалось визначити вашого викладача (TeacherId відсутній).");
+            }
+            else
+            {
+                var entries = await _client.GetAsync<List<ScheduleEntryView>>(
+                    $"api/schedule/teacher/{me.TeacherId}");
+                PrintEntries(entries);
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Помилка: {ex.Message}");
         }
+
         Console.WriteLine("\nНатисніть будь-яку клавішу...");
         Console.ReadKey();
     }
@@ -58,17 +68,49 @@ public class TeacherMenu
         Console.WriteLine("=== РОЗКЛАД ГРУПИ ===");
         Console.Write("Введіть ID групи: ");
         string? groupId = Console.ReadLine();
+
         try
         {
-            var result = await _client.GetAsync<object>($"api/schedule/group/{groupId}");
-            Console.WriteLine($"\nРозклад групи ID {groupId}:");
-            Console.WriteLine(result?.ToString());
+            var entries = await _client.GetAsync<List<ScheduleEntryView>>($"api/schedule/group/{groupId}");
+            Console.WriteLine($"\nРозклад групи ID {groupId}:\n");
+            PrintEntries(entries);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Помилка: {ex.Message}");
         }
+
         Console.WriteLine("\nНатисніть будь-яку клавішу...");
         Console.ReadKey();
     }
+
+    private static void PrintEntries(List<ScheduleEntryView>? entries)
+    {
+        if (entries is null || entries.Count == 0)
+        {
+            Console.WriteLine("Записів не знайдено.");
+            return;
+        }
+
+        foreach (var e in entries)
+        {
+            Console.WriteLine(
+                $"#{e.Id} | {e.DayOfWeek}, пара {e.LessonNumber} ({e.WeekType}) | " +
+                $"{e.SubjectName} | {e.TeacherFullName} | гр. {e.GroupName} | ауд. {e.ClassroomName} | " +
+                $"{e.Semester} семестр, {e.Year}");
+        }
+    }
 }
+
+/// <summary>
+/// Дані поточного користувача з /api/auth/me.
+/// </summary>
+public class CurrentUserView
+{
+    public int Id { get; set; }
+    public string Login { get; set; } = string.Empty;
+    public UserRole Role { get; set; }
+    public int? TeacherId { get; set; }
+    public int? GroupId { get; set; }
+}
+

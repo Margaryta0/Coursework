@@ -1,6 +1,3 @@
-using System;
-using System.Threading.Tasks;
-
 namespace ScheduleSystem.ConsoleUI.Menus;
 
 public class StudentMenu
@@ -35,18 +32,46 @@ public class StudentMenu
     private async Task ShowMyScheduleAsync()
     {
         Console.Clear();
-        Console.WriteLine("=== МІЙ РОЗКЛАД ===");
+        Console.WriteLine("=== МІЙ РОЗКЛАД ===\n");
+
         try
         {
-            var result = await _client.GetAsync<object>("api/schedule/group/1");
-            Console.WriteLine("\nАктуальний розклад вашої групи:");
-            Console.WriteLine(result?.ToString());
+            var me = await _client.GetAsync<CurrentUserView>("api/auth/me");
+            if (me?.GroupId is null)
+            {
+                Console.WriteLine("Не вдалось визначити вашу групу (GroupId відсутній).");
+            }
+            else
+            {
+                var entries = await _client.GetAsync<List<ScheduleEntryView>>(
+                    $"api/schedule/group/{me.GroupId}");
+                PrintEntries(entries);
+            }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Помилка: {ex.Message}");
         }
+
         Console.WriteLine("\nНатисніть будь-яку клавішу...");
         Console.ReadKey();
     }
+
+    private static void PrintEntries(List<ScheduleEntryView>? entries)
+    {
+        if (entries is null || entries.Count == 0)
+        {
+            Console.WriteLine("Записів не знайдено.");
+            return;
+        }
+
+        foreach (var e in entries)
+        {
+            Console.WriteLine(
+                $"#{e.Id} | {e.DayOfWeek}, пара {e.LessonNumber} ({e.WeekType}) | " +
+                $"{e.SubjectName} | {e.TeacherFullName} | гр. {e.GroupName} | ауд. {e.ClassroomName} | " +
+                $"{e.Semester} семестр, {e.Year}");
+        }
+    }
 }
+

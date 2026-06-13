@@ -1,7 +1,8 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleSystem.BLL.Interfaces;
-using ScheduleSystem.BLL.Models; 
+using ScheduleSystem.BLL.Models;
 using ScheduleSystem.BLL.Exceptions;
 using ScheduleSystem.WebAPI.Models;
 
@@ -23,11 +24,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-
             var token = await _userService.LoginAsync(request.Login, request.Password);
-            
-
-            return Ok(new { Token = token });
+            return Ok(new LoginResponse(token));
         }
         catch (NotFoundException ex)
         {
@@ -45,7 +43,6 @@ public class AuthController : ControllerBase
     {
         try
         {
-
             var dto = new UserDto
             {
                 Login = request.Login,
@@ -55,7 +52,6 @@ public class AuthController : ControllerBase
             };
 
             var createdUser = await _userService.CreateAsync(dto, request.Password);
-            
             return Ok(createdUser);
         }
         catch (ValidationException ex)
@@ -63,4 +59,24 @@ public class AuthController : ControllerBase
             return BadRequest(new { Message = ex.Message });
         }
     }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (idClaim is null || !int.TryParse(idClaim, out var userId))
+            return Unauthorized();
+
+        try
+        {
+            var user = await _userService.GetByIdAsync(userId);
+            return Ok(user);
+        }
+        catch (NotFoundException ex)
+        {
+            return NotFound(new { Message = ex.Message });
+        }
+    }
 }
+

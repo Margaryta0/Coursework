@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using AutoMapper;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using ScheduleSystem.BLL.Exceptions;
 using ScheduleSystem.BLL.Interfaces;
@@ -15,12 +16,13 @@ public class UserService : IUserService
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
-    private readonly string _jwtSecret = "SuperSecretKeyForScheduleSystem2026!!!"; // Ключ для підпису JWT
+    private readonly IConfiguration _configuration;
 
-    public UserService(IUnitOfWork uow, IMapper mapper)
+    public UserService(IUnitOfWork uow, IMapper mapper, IConfiguration configuration)
     {
         _uow = uow;
         _mapper = mapper;
+        _configuration = configuration;
     }
 
     public async Task<string> LoginAsync(string login, string password)
@@ -33,14 +35,22 @@ public class UserService : IUserService
             throw new NotFoundException($"Користувача з логіном '{login}' не знайдено.");
         }
 
-        bool isPasswordValid = user.PasswordHash == password || BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+        bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
         if (!isPasswordValid)
         {
             throw new ValidationException("Неправильний пароль.");
         }
 
+        var jwtKey = _configuration["Jwt:Key"]
+            ?? throw new InvalidOperationException("JWT key is not configured.");
+        var jwtIssuer = _configuration["Jwt:Issuer"];
+        var jwtAudience = _configuration["Jwt:Audience"];
+        var expiresInMinutes = int.TryParse(_configuration["Jwt:ExpiresInMinutes"], out var minutes)
+            ? minutes
+            : 60;
+
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_jwtSecret);
+        var key = Encoding.UTF8.GetBytes(jwtKey);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -49,7 +59,9 @@ public class UserService : IUserService
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.Role.ToString())
             }),
-            Expires = DateTime.UtcNow.AddDays(7), // Токен діє тиждень
+            Issuer = jwtIssuer,
+            Audience = jwtAudience,
+            Expires = DateTime.UtcNow.AddMinutes(expiresInMinutes),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
@@ -65,7 +77,6 @@ public class UserService : IUserService
             throw new NotFoundException($"Користувача з ID {id} не знайдено.");
         }
 
-        // Мапимо Entity в DTO за допомогою AutoMapper
         return _mapper.Map<UserDto>(user);
     }
 
@@ -83,7 +94,6 @@ public class UserService : IUserService
         }
 
         var userEntity = _mapper.Map<User>(dto);
-        
         userEntity.PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
 
         await _uow.Users.AddAsync(userEntity);

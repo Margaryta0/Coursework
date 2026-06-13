@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using Moq;
 using ScheduleSystem.BLL.Exceptions;
 using ScheduleSystem.BLL.Interfaces;
@@ -7,6 +7,7 @@ using ScheduleSystem.BLL.Services;
 using ScheduleSystem.DAL.Entities;
 using ScheduleSystem.DAL.Interfaces;
 using Xunit;
+using Microsoft.Extensions.Configuration;
 
 namespace ScheduleSystem.Tests;
 
@@ -26,7 +27,19 @@ public class UserServiceTests
         var config = new MapperConfiguration(cfg => cfg.AddProfile<MappingProfile>());
         _mapper = config.CreateMapper();
 
-        _userService = new UserService(_mockUow.Object, _mapper);
+        // Мок конфігурації — потрібні значення для генерації JWT
+        var configData = new Dictionary<string, string?>
+    {
+        { "Jwt:Key", "test-secret-key-at-least-32-characters-long" },
+        { "Jwt:Issuer", "ScheduleSystem" },
+        { "Jwt:Audience", "ScheduleSystemUsers" },
+        { "Jwt:ExpiresInMinutes", "60" }
+    };
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
+        _userService = new UserService(_mockUow.Object, _mapper, configuration);
     }
 
     [Fact]
